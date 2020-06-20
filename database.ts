@@ -12,7 +12,7 @@ let dex = new Dex({
 let dexecutor = new Dexecutor({
   client: client,
   connection: {
-    filename: "database.db",
+    filename: "test.db",
   },
 });
 
@@ -81,33 +81,45 @@ export const addEntry = async ({ input }: any) => {
 
 // Get Running Total
 export const getTotal = async () => {
-  // Opening the connection
-  await dexecutor.connect();
+  try {
+    // Opening the connection
+    await dexecutor.connect();
+    console.log("connected to db");
 
-  let sqlQuery;
+    let sqlQuery;
 
-  // Check if table exists
-  let check_if_exists = dex
-    .select("name")
-    .from("sqlite_master")
-    .where({ type: "table", name: "budget" })
-    .toString();
+    // Check if table exists
+    let check_if_exists = dex
+      .select("name")
+      .from("sqlite_master")
+      .where({ type: "table", name: "budget" })
+      .toString();
 
-  let entryTableExist = await dexecutor.execute(check_if_exists);
+    console.log("checked that table exists");
 
-  if (entryTableExist.length === 0) {
-    return;
+    let entryTableExist = await dexecutor.execute(check_if_exists);
+
+    console.log(entryTableExist);
+    console.log("executing db check");
+    if (entryTableExist.length === 0) {
+      return 0;
+    }
+    console.log("getting result now");
+    // SELECT Query
+    let result = await dexecutor.execute(
+      dex.select("*").from("budget").toString()
+    );
+    console.log("get result");
+
+    // await dexecutor.close();
+    const getAllEntries: any[] = readableJSON(result);
+    console.log("returning total of entries");
+    return calculateTotal(getAllEntries);
+  } catch (e) {
+    console.log("Error in getting Total");
+    console.log(e.message);
+    return new Error(e.message);
   }
-
-  // SELECT Query
-  let result = await dexecutor.execute(
-    dex.queryBuilder().select("*").from("budget").toString()
-  );
-
-  await dexecutor.close();
-  const getAllEntries: any[] = readableJSON(result);
-
-  return calculateTotal(getAllEntries);
 };
 
 // Delete Entry
@@ -135,16 +147,41 @@ export const deleteEntry = async (id: any) => {
     return new Error("Record with given ID not present");
   }
 
-  // SELECT Query
-  let result = await dexecutor.execute(
-    dex.queryBuilder().select("*").from("budget").toString()
-  );
-
   await dexecutor.close();
 
   var jsonResult = readableJSON(entryTableExist);
   console.log(jsonResult);
   return jsonResult[0];
+};
+
+// Get Entries
+export const getEntries = async () => {
+  try {
+    // Opening the connection
+    await dexecutor.connect();
+
+    let sqlQuery;
+
+    // Check if the entry with id is in the DB
+    let check_if_exists = dex.select("*").from("budget").toString();
+
+    let entryTableExist = await dexecutor.execute(check_if_exists);
+
+    if (entryTableExist.length) {
+      console.log(entryTableExist);
+    } else {
+      return new Error("Record with given ID not present");
+    }
+    await dexecutor.close();
+
+    var jsonResult = readableJSON(entryTableExist);
+    console.log(jsonResult);
+    return jsonResult;
+  } catch (e) {
+    console.log("Error in getting Entries");
+    console.log(e.message);
+    return new Error(e.message);
+  }
 };
 
 // Helper Function

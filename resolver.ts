@@ -1,4 +1,4 @@
-import { addEntry, getTotal, deleteEntry } from "./database.ts";
+import { addEntry, getTotal, deleteEntry, getEntries } from "./database.ts";
 
 export default class Resolvers {
   //Add Entry
@@ -16,5 +16,10 @@ export default class Resolvers {
 
   async getTotal() {
     return getTotal();
+  }
+
+  //Get Entries
+  async getEntries() {
+    return await getEntries();
   }
 }

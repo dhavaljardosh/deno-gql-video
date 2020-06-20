@@ -8,6 +8,7 @@ const schema = buildSchema(`
 
     type Query {
         getTotal: Float
+        getEntries: [Entry]
     }
 
     type Mutation {
